@@ -50,6 +50,9 @@
     .checkline{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;user-select:none;cursor:pointer;}
     .select-check{width:18px;height:18px;accent-color:#0B0B0B;cursor:pointer;}
     .selected-count{font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap;}
+    .file-delete-btn{width:30px;height:30px;border:1px solid var(--line);border-radius:999px;background:#fff;display:inline-grid;place-items:center;color:#0B0B0B;font-size:15px;line-height:1;flex:0 0 auto;}
+    .file-delete-btn:disabled{opacity:.35;cursor:not-allowed;}
+    .file-delete-btn:hover{border-color:#0B0B0B;}
     .item-check{width:18px;height:18px;accent-color:#0B0B0B;cursor:pointer;justify-self:center;}
     .preview-panel{min-height:calc(100vh - 36px);display:flex;flex-direction:column;gap:14px;}
     .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
@@ -350,6 +353,7 @@
       <div class="bulk-row">
         <label class="checkline"><input id="selectAllToggle" class="select-check" type="checkbox" checked />전체</label>
         <span id="selectedCount" class="selected-count">0개 선택</span>
+        <button id="deleteSelectedFilesBtn" class="file-delete-btn" type="button" title="선택한 파일 삭제" aria-label="선택한 파일 삭제">🗑</button>
       </div>
       <div class="list" id="imageList"></div>
     </aside>
@@ -442,6 +446,7 @@
   const imageList = document.getElementById('imageList');
   const selectAllToggle = document.getElementById('selectAllToggle');
   const selectedCount = document.getElementById('selectedCount');
+  const deleteSelectedFilesBtn = document.getElementById('deleteSelectedFilesBtn');
   const canvas = document.getElementById('previewCanvas');
   const ctx = canvas.getContext('2d');
   const cropPosition = document.getElementById('cropPosition');
@@ -901,6 +906,11 @@
 
   async function saveCurrentProjectNow(){
     if (!state.currentProjectId) return;
+    if (!state.images.length) {
+      try { await deleteProject(state.currentProjectId); } catch (_) {}
+      setSaveStatus('이미지 없음');
+      return;
+    }
     setSaveStatus('저장 중...');
     try {
       const now = Date.now();
@@ -939,6 +949,7 @@
 
   function scheduleProjectSave(){
     if (!state.currentProjectId) return;
+    if (!state.images.length) { setSaveStatus('이미지 없음'); return; }
     setSaveStatus('저장 대기...');
     clearTimeout(state.savingTimer);
     state.savingTimer = setTimeout(saveCurrentProjectNow, 650);
@@ -1057,7 +1068,6 @@
     state.projectCreatedAt = Date.now();
     setSaveStatus('새 저장본');
     showEditor();
-    scheduleProjectSave();
   }
 
   function getFileMetaStore(){
@@ -1161,6 +1171,7 @@
     saveOneBtn.disabled = !has;
     saveAllBtn.disabled = selected === 0;
     if (selectedCount) selectedCount.textContent = `${selected}개 선택`;
+    if (deleteSelectedFilesBtn) deleteSelectedFilesBtn.disabled = selected === 0;
     if (selectAllToggle) {
       selectAllToggle.checked = has && selected === state.images.length;
       selectAllToggle.indeterminate = selected > 0 && selected < state.images.length;
@@ -1268,6 +1279,30 @@
       row.append(check, thumb, wrap);
       imageList.append(row);
     });
+  }
+
+  function deleteSelectedImages(){
+    const targets = state.images
+      .map((item, index) => ({ item, index }))
+      .filter(entry => entry.item.selected !== false);
+    if (!targets.length) {
+      alert('삭제할 파일을 선택해줘.');
+      return;
+    }
+    if (!confirm(`${targets.length}개 파일을 목록에서 삭제할까요?`)) return;
+    const deleteSet = new Set(targets.map(entry => entry.index));
+    state.images.forEach((item, index) => {
+      if (deleteSet.has(index)) {
+        try { URL.revokeObjectURL(item.url); } catch (_) {}
+      }
+    });
+    state.images = state.images.filter((_, index) => !deleteSet.has(index));
+    state.active = Math.min(state.active, Math.max(0, state.images.length - 1));
+    state.lastCheckedIndex = null;
+    renderList();
+    drawPreview();
+    setStatus();
+    scheduleProjectSave();
   }
 
   function drawImageToContext(targetCtx, img, w, h){
@@ -1532,6 +1567,7 @@
     setStatus();
     scheduleProjectSave();
   });
+  if (deleteSelectedFilesBtn) deleteSelectedFilesBtn.addEventListener('click', deleteSelectedImages);
   fitHeightBtn.addEventListener('click', fitToHeight);
   fitWidthBtn.addEventListener('click', fitToWidth);
   resetScaleBtn.addEventListener('click', resetScale);
