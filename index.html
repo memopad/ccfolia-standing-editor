@@ -9,7 +9,7 @@
     :root{
       --bg:#EFEFEF;
       --text:#0B0B0B;
-      --card:#FFFFFF;
+      --card:#EFEFEF;
       --line:#D8D8D8;
       --muted:#666666;
       --dark:#171717;
@@ -202,7 +202,8 @@
     .home-search{height:38px;width:220px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:0 14px;font-size:14px;font-weight:500;outline:none;color:#0B0B0B;}
     .home-search:focus{border-color:#0B0B0B;}
     .home-sort{height:38px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:0 34px 0 14px;font-size:14px;font-weight:500;outline:none;color:#0B0B0B;}
-    .home-search-btn{height:38px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#0B0B0B;padding:0 14px;font-size:14px;font-weight:600;}
+    .home-search-btn,.home-backup-btn{height:38px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#0B0B0B;padding:0 14px;font-size:14px;font-weight:600;}
+    .home-backup-file{display:none;}
     .fab{position:fixed;right:64px;bottom:54px;width:76px;height:76px;border-radius:999px;background:#fff;color:#0B0B0B;border:0;box-shadow:none;font-size:78px;font-weight:300;line-height:1;display:grid;place-items:center;padding-bottom:10px;}
     .editor-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px;}
     .link-btn{height:34px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:0 12px;font-size:13px;font-weight:600;}
@@ -279,11 +280,14 @@
     <div class="home-head">
       <div>
         <h1 class="home-title">코코포리아 스탠딩 편집기</h1>
-        <p class="home-sub">로컬에 저장된 스탠딩 크롭들을 불러오고 다시 편집합니다.</p>
+        <p class="home-sub">로컬에 저장된 스탠딩 크롭들을 불러오고, 백업 파일로 다른 기기에서도 이어 쓸 수 있습니다.</p>
       </div>
       <div class="home-tools" aria-label="검색과 정렬">
         <input id="homeSearchInput" class="home-search" type="search" placeholder="검색" autocomplete="off" />
         <button id="homeSearchBtn" class="home-search-btn" type="button">검색</button>
+        <button id="backupExportBtn" class="home-backup-btn" type="button">설정 백업</button>
+        <button id="backupImportBtn" class="home-backup-btn" type="button">설정 불러오기</button>
+        <input id="backupImportFile" class="home-backup-file" type="file" accept="application/json,.json" />
         <select id="homeSortSelect" class="home-sort" aria-label="정렬 기준">
           <option value="latest">최신순</option>
           <option value="oldest">오래된순</option>
@@ -438,6 +442,9 @@
   const homeEmpty = document.getElementById('homeEmpty');
   const homeSearchInput = document.getElementById('homeSearchInput');
   const homeSearchBtn = document.getElementById('homeSearchBtn');
+  const backupExportBtn = document.getElementById('backupExportBtn');
+  const backupImportBtn = document.getElementById('backupImportBtn');
+  const backupImportFile = document.getElementById('backupImportFile');
   const homeSortSelect = document.getElementById('homeSortSelect');
   const addProjectBtn = document.getElementById('addProjectBtn');
   const homeContextMenu = document.getElementById('homeContextMenu');
@@ -688,6 +695,92 @@
   }
 
   function blobToObjectUrl(blob){ return blob ? URL.createObjectURL(blob) : ''; }
+
+  function blobToDataURL(blob){
+    return new Promise((resolve, reject) => {
+      if (!blob) return resolve(null);
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function dataURLToBlob(dataURL){
+    if (!dataURL) return null;
+    const parts = String(dataURL).split(',');
+    const meta = parts[0] || '';
+    const base64 = parts[1] || '';
+    const mimeMatch = meta.match(/data:([^;]+);base64/);
+    const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    const bin = atob(base64);
+    const arr = new Uint8Array(bin.length);
+    for (let i=0; i<bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type:mime });
+  }
+
+  async function exportBackup(){
+    if (state.currentProjectId) await saveCurrentProjectNow();
+    let projects = [];
+    try { projects = await getAllProjects(); } catch (err) { console.error(err); alert('백업 데이터를 읽지 못했어.'); return; }
+    const packedProjects = [];
+    for (const project of projects) {
+      const packed = { ...project };
+      packed.thumbDataURL = await blobToDataURL(project.thumbBlob);
+      delete packed.thumbBlob;
+      packed.images = [];
+      for (const item of (project.images || [])) {
+        const copied = { ...item };
+        copied.dataURL = await blobToDataURL(item.blob);
+        delete copied.blob;
+        packed.images.push(copied);
+      }
+      packedProjects.push(packed);
+    }
+    const payload = {
+      app: 'ccfolia-standing-editor',
+      version: 1,
+      exportedAt: Date.now(),
+      projects: packedProjects
+    };
+    const blob = new Blob([JSON.stringify(payload)], { type:'application/json' });
+    downloadBlob(blob, `ccfolia_standing_backup_${formatSavedTime(Date.now())}.json`);
+  }
+
+  async function importBackupFile(file){
+    if (!file) return;
+    let payload;
+    try { payload = JSON.parse(await file.text()); }
+    catch (err) { alert('백업 파일을 읽지 못했어. JSON 파일인지 확인해줘.'); return; }
+    if (!payload || payload.app !== 'ccfolia-standing-editor' || !Array.isArray(payload.projects)) {
+      alert('이 편집기 백업 파일 형식이 아닌 것 같아.');
+      return;
+    }
+    const shouldReplace = confirm('백업을 불러올게.\n\n확인: 기존 저장본은 유지하고 백업을 추가/덮어쓰기\n취소: 불러오기 중단');
+    if (!shouldReplace) return;
+    try {
+      for (const raw of payload.projects) {
+        const project = { ...raw };
+        project.thumbBlob = dataURLToBlob(raw.thumbDataURL);
+        delete project.thumbDataURL;
+        project.images = (raw.images || []).map(item => {
+          const copied = { ...item, blob: dataURLToBlob(item.dataURL) };
+          delete copied.dataURL;
+          return copied;
+        });
+        if (!project.id) project.id = makeProjectId();
+        await putProject(project);
+      }
+      alert('백업을 불러왔어.');
+      renderHome();
+    } catch (err) {
+      console.error(err);
+      alert('백업을 불러오는 중 오류가 났어.');
+    } finally {
+      if (backupImportFile) backupImportFile.value = '';
+    }
+  }
+
 
   async function renderThumbBlob(){
     if (!state.images.length) return null;
@@ -1311,6 +1404,9 @@
   if (homeSearchInput) homeSearchInput.addEventListener('input', e => { state.homeQuery = e.target.value || ''; renderHome(); });
   if (homeSearchBtn) homeSearchBtn.addEventListener('click', () => { state.homeQuery = homeSearchInput ? homeSearchInput.value || '' : ''; renderHome(); });
   if (homeSortSelect) homeSortSelect.addEventListener('change', e => { state.homeSort = e.target.value || 'latest'; renderHome(); });
+  if (backupExportBtn) backupExportBtn.addEventListener('click', exportBackup);
+  if (backupImportBtn) backupImportBtn.addEventListener('click', () => backupImportFile && backupImportFile.click());
+  if (backupImportFile) backupImportFile.addEventListener('change', e => importBackupFile(e.target.files && e.target.files[0]));
   if (homeContextDeleteBtn) homeContextDeleteBtn.addEventListener('click', async () => {
     const id = state.contextMenuProjectId;
     if (!id) return hideHomeContextMenu();
