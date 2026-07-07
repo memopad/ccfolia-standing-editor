@@ -187,24 +187,35 @@
     .project-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 150px));gap:34px 38px;align-items:start;}
     .project-card{width:150px;border:0;background:transparent;padding:0;text-align:center;cursor:pointer;position:relative;color:#0B0B0B;}
     .project-card:focus-visible{outline:2px solid #0B0B0B;outline-offset:8px;border-radius:8px;}
+    .project-card.selecting .project-thumb{filter:brightness(.97);}
+    .project-select-check{position:absolute;left:8px;top:8px;z-index:3;width:22px;height:22px;accent-color:#0B0B0B;}
     .project-thumb{width:150px;height:150px;border:0;background:#fff;display:grid;place-items:center;overflow:hidden;}
     .project-thumb img{width:100%;height:100%;object-fit:contain;display:block;}
     .project-empty{font-size:12px;color:#777;line-height:1.4;padding:10px;}
     .project-name{font-size:15px;font-weight:500;margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.02em;color:#0B0B0B;}
     .project-del{display:none;}
-    .home-context-menu{position:fixed;z-index:9999;display:none;min-width:112px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14);}
-    .home-context-menu.show{display:block;}
-    .home-context-menu button{width:100%;height:34px;border-radius:8px;text-align:left;padding:0 10px;font-size:14px;font-weight:500;color:#0B0B0B;background:#fff;}
-    .home-context-menu button:hover{background:#F2F2F2;}
+    .home-context-menu,.fab-menu{position:fixed;z-index:9999;display:none;min-width:132px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14);}
+    .home-context-menu.show,.fab-menu.show{display:block;}
+    .home-context-menu button,.fab-menu button{width:100%;height:34px;border-radius:8px;text-align:left;padding:0 10px;font-size:14px;font-weight:500;color:#0B0B0B;background:#fff;}
+    .home-context-menu button:hover,.fab-menu button:hover{background:#F2F2F2;}
     .home-empty{color:#777;font-size:14px;line-height:1.6;margin-top:26px;}
 
     .home-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+    .home-selection-bar{display:none;align-items:center;gap:10px;margin:-14px 0 24px;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:16px;}
+    .home-selection-bar.show{display:flex;}
+    .home-selection-bar .spacer{flex:1;}
+    .home-selection-bar label{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;}
+    .home-selection-bar input{width:18px;height:18px;accent-color:#0B0B0B;}
+    .home-selection-count{font-size:13px;color:var(--muted);font-weight:500;}
+    .home-action-btn{height:34px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#0B0B0B;padding:0 12px;font-size:13px;font-weight:600;}
+    .home-action-btn.primary{background:#0B0B0B;color:#fff;border-color:#0B0B0B;}
     .home-search{height:38px;width:220px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:0 14px;font-size:14px;font-weight:500;outline:none;color:#0B0B0B;}
     .home-search:focus{border-color:#0B0B0B;}
     .home-sort{height:38px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:0 34px 0 14px;font-size:14px;font-weight:500;outline:none;color:#0B0B0B;}
     .home-search-btn,.home-backup-btn{height:38px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#0B0B0B;padding:0 14px;font-size:14px;font-weight:600;}
     .home-backup-file{display:none;}
-    .fab{position:fixed;right:64px;bottom:54px;width:76px;height:76px;border-radius:999px;background:#fff;color:#0B0B0B;border:0;box-shadow:none;font-size:78px;font-weight:300;line-height:1;display:grid;place-items:center;padding-bottom:10px;}
+    .fab{position:fixed;right:64px;bottom:54px;width:76px;height:76px;border-radius:999px;background:#fff;color:transparent;border:0;box-shadow:none;font-size:0;font-weight:300;line-height:1;display:grid;place-items:center;padding:0;}
+    .fab::before{content:'+';position:absolute;left:50%;top:50%;transform:translate(-50%,-53%);font-size:66px;font-weight:300;line-height:1;color:#0B0B0B;}
     .editor-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px;}
     .link-btn{height:34px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:0 12px;font-size:13px;font-weight:600;}
 
@@ -220,7 +231,10 @@
       .project-card{width:118px;}
       .project-thumb{width:118px;height:118px;}
       .project-name{font-size:13px;margin-top:8px;}
-      .fab{right:26px;bottom:30px;width:58px;height:58px;font-size:58px;padding-bottom:8px;}
+      .home-selection-bar{margin:-8px 0 20px;flex-wrap:wrap;}
+      .home-selection-bar .spacer{display:none;}
+      .fab{right:26px;bottom:30px;width:58px;height:58px;padding:0;}
+      .fab::before{font-size:52px;transform:translate(-50%,-53%);}
     }
     @media (max-width:980px){
       .app{grid-template-columns:1fr;padding:12px;gap:12px;}
@@ -285,8 +299,6 @@
       <div class="home-tools" aria-label="검색과 정렬">
         <input id="homeSearchInput" class="home-search" type="search" placeholder="검색" autocomplete="off" />
         <button id="homeSearchBtn" class="home-search-btn" type="button">검색</button>
-        <button id="backupExportBtn" class="home-backup-btn" type="button">설정 백업</button>
-        <button id="backupImportBtn" class="home-backup-btn" type="button">설정 불러오기</button>
         <input id="backupImportFile" class="home-backup-file" type="file" accept="application/json,.json" />
         <select id="homeSortSelect" class="home-sort" aria-label="정렬 기준">
           <option value="latest">최신순</option>
@@ -296,9 +308,23 @@
         </select>
       </div>
     </div>
+    <div id="homeSelectionBar" class="home-selection-bar" aria-label="저장본 선택 작업">
+      <label><input id="homeSelectAllToggle" type="checkbox" />전체</label>
+      <span id="homeSelectedCount" class="home-selection-count">0개 선택</span>
+      <span class="spacer"></span>
+      <button id="homeExportSelectedBtn" class="home-action-btn primary" type="button">선택 내보내기</button>
+      <button id="homeDeleteSelectedBtn" class="home-action-btn" type="button">선택 삭제</button>
+      <button id="homeSelectionCancelBtn" class="home-action-btn" type="button">취소</button>
+    </div>
     <div id="projectGrid" class="project-grid"></div>
     <div id="homeEmpty" class="home-empty">아직 저장된 스탠딩이 없습니다. 우측 하단 + 버튼으로 새 편집을 시작하세요.</div>
     <button id="addProjectBtn" class="fab" type="button" aria-label="새 스탠딩 추가">+</button>
+    <div id="fabMenu" class="fab-menu" role="menu" aria-hidden="true">
+      <button id="fabNewBtn" type="button" role="menuitem">새로 만들기</button>
+      <button id="fabExportBtn" type="button" role="menuitem">내보내기</button>
+      <button id="fabImportBtn" type="button" role="menuitem">불러오기</button>
+      <button id="fabBulkDeleteBtn" type="button" role="menuitem">다중 삭제</button>
+    </div>
     <div id="homeContextMenu" class="home-context-menu" role="menu" aria-hidden="true"><button id="homeContextDeleteBtn" type="button" role="menuitem">삭제</button></div>
   </section>
 
@@ -447,6 +473,17 @@
   const backupImportFile = document.getElementById('backupImportFile');
   const homeSortSelect = document.getElementById('homeSortSelect');
   const addProjectBtn = document.getElementById('addProjectBtn');
+  const fabMenu = document.getElementById('fabMenu');
+  const fabNewBtn = document.getElementById('fabNewBtn');
+  const fabExportBtn = document.getElementById('fabExportBtn');
+  const fabImportBtn = document.getElementById('fabImportBtn');
+  const fabBulkDeleteBtn = document.getElementById('fabBulkDeleteBtn');
+  const homeSelectionBar = document.getElementById('homeSelectionBar');
+  const homeSelectAllToggle = document.getElementById('homeSelectAllToggle');
+  const homeSelectedCount = document.getElementById('homeSelectedCount');
+  const homeExportSelectedBtn = document.getElementById('homeExportSelectedBtn');
+  const homeDeleteSelectedBtn = document.getElementById('homeDeleteSelectedBtn');
+  const homeSelectionCancelBtn = document.getElementById('homeSelectionCancelBtn');
   const homeContextMenu = document.getElementById('homeContextMenu');
   const homeContextDeleteBtn = document.getElementById('homeContextDeleteBtn');
   const backHomeBtn = document.getElementById('backHomeBtn');
@@ -476,6 +513,13 @@
     homeQuery: '',
     homeSort: 'latest',
     contextMenuProjectId: null,
+    fabMenuOpen: false,
+    homeSelectionMode: null,
+    homeSelectedProjectIds: new Set(),
+    homeVisibleProjectIds: [],
+    homeLastCheckedProjectIndex: null,
+    fabLongPressTimer: null,
+    suppressNextFabClick: false,
     savingTimer: null,
     mobileTab: 'preview',
     controlsCollapsed: false,
@@ -547,6 +591,69 @@
     const y = Math.min(clientY, window.innerHeight - rect.height - 8);
     homeContextMenu.style.left = `${Math.max(8, x)}px`;
     homeContextMenu.style.top = `${Math.max(8, y)}px`;
+  }
+
+
+  function hideFabMenu(){
+    if (!fabMenu) return;
+    fabMenu.classList.remove('show');
+    fabMenu.setAttribute('aria-hidden', 'true');
+    state.fabMenuOpen = false;
+  }
+
+  function showFabMenu(clientX, clientY){
+    if (!fabMenu) return;
+    hideHomeContextMenu();
+    fabMenu.classList.add('show');
+    fabMenu.setAttribute('aria-hidden', 'false');
+    state.fabMenuOpen = true;
+    const rect = fabMenu.getBoundingClientRect();
+    const x = Math.min(clientX, window.innerWidth - rect.width - 8);
+    const y = Math.min(clientY, window.innerHeight - rect.height - 8);
+    fabMenu.style.left = `${Math.max(8, x)}px`;
+    fabMenu.style.top = `${Math.max(8, y)}px`;
+  }
+
+  function setHomeSelectionMode(mode){
+    state.homeSelectionMode = mode || null;
+    state.homeSelectedProjectIds = new Set();
+    state.homeLastCheckedProjectIndex = null;
+    updateHomeSelectionBar();
+    renderHome();
+  }
+
+  function updateHomeSelectionBar(){
+    const selecting = !!state.homeSelectionMode;
+    if (homeSelectionBar) homeSelectionBar.classList.toggle('show', selecting);
+    const count = state.homeSelectedProjectIds ? state.homeSelectedProjectIds.size : 0;
+    if (homeSelectedCount) homeSelectedCount.textContent = `${count}개 선택`;
+    if (homeExportSelectedBtn) homeExportSelectedBtn.style.display = state.homeSelectionMode === 'export' ? '' : 'none';
+    if (homeDeleteSelectedBtn) homeDeleteSelectedBtn.style.display = state.homeSelectionMode === 'delete' ? '' : 'none';
+    if (homeSelectAllToggle) {
+      const total = state.homeVisibleProjectIds ? state.homeVisibleProjectIds.length : 0;
+      homeSelectAllToggle.checked = total > 0 && count === total;
+      homeSelectAllToggle.indeterminate = count > 0 && count < total;
+    }
+  }
+
+  function toggleHomeProjectSelection(projectId, index, checked, shiftKey){
+    if (!state.homeSelectionMode) return;
+    if (shiftKey && state.homeLastCheckedProjectIndex !== null) {
+      const start = Math.min(state.homeLastCheckedProjectIndex, index);
+      const end = Math.max(state.homeLastCheckedProjectIndex, index);
+      for (let i = start; i <= end; i++) {
+        const id = state.homeVisibleProjectIds[i];
+        if (!id) continue;
+        if (checked) state.homeSelectedProjectIds.add(id);
+        else state.homeSelectedProjectIds.delete(id);
+      }
+    } else {
+      if (checked) state.homeSelectedProjectIds.add(projectId);
+      else state.homeSelectedProjectIds.delete(projectId);
+    }
+    state.homeLastCheckedProjectIndex = index;
+    updateHomeSelectionBar();
+    renderHome();
   }
 
   function setSaveStatus(text){ if (saveStatus) saveStatus.textContent = text; if (mobileSaveStatus) mobileSaveStatus.textContent = text; }
@@ -719,10 +826,15 @@
     return new Blob([arr], { type:mime });
   }
 
-  async function exportBackup(){
+  async function exportBackup(projectIds = null){
     if (state.currentProjectId) await saveCurrentProjectNow();
     let projects = [];
     try { projects = await getAllProjects(); } catch (err) { console.error(err); alert('백업 데이터를 읽지 못했어.'); return; }
+    if (Array.isArray(projectIds)) {
+      const idSet = new Set(projectIds);
+      projects = projects.filter(project => idSet.has(project.id));
+    }
+    if (!projects.length) { alert('내보낼 저장본을 선택해줘.'); return; }
     const packedProjects = [];
     for (const project of projects) {
       const packed = { ...project };
@@ -844,19 +956,48 @@
     else if (state.homeSort === 'nameAsc') projects.sort((a,b) => collator.compare(displayProjectName(a), displayProjectName(b)));
     else if (state.homeSort === 'nameDesc') projects.sort((a,b) => collator.compare(displayProjectName(b), displayProjectName(a)));
     else projects.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    state.homeVisibleProjectIds = projects.map(project => project.id);
+    updateHomeSelectionBar();
     projectGrid.innerHTML = '';
     homeEmpty.style.display = projects.length ? 'none' : 'block';
     homeEmpty.textContent = query ? '검색 결과가 없습니다.' : '아직 저장된 스탠딩이 없습니다. 우측 하단 + 버튼으로 새 편집을 시작하세요.';
     for (const project of projects) {
-      const card = document.createElement('button');
-      card.className = 'project-card';
-      card.type = 'button';
-      card.addEventListener('click', () => openExistingProject(project.id));
+      const card = document.createElement('div');
+      card.className = 'project-card' + (state.homeSelectionMode ? ' selecting' : '');
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
+      card.addEventListener('click', () => {
+        if (state.homeSelectionMode) {
+          const checked = !state.homeSelectedProjectIds.has(project.id);
+          toggleHomeProjectSelection(project.id, state.homeVisibleProjectIds.indexOf(project.id), checked, false);
+          return;
+        }
+        openExistingProject(project.id);
+      });
+      card.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        card.click();
+      });
       card.addEventListener('contextmenu', e => {
         e.preventDefault();
         e.stopPropagation();
+        if (state.homeSelectionMode) return;
         showHomeContextMenu(project.id, e.clientX, e.clientY);
       });
+
+      if (state.homeSelectionMode) {
+        const projectCheck = document.createElement('input');
+        projectCheck.className = 'project-select-check';
+        projectCheck.type = 'checkbox';
+        projectCheck.checked = state.homeSelectedProjectIds.has(project.id);
+        projectCheck.title = '선택';
+        projectCheck.addEventListener('click', e => {
+          e.stopPropagation();
+          toggleHomeProjectSelection(project.id, state.homeVisibleProjectIds.indexOf(project.id), e.target.checked, e.shiftKey);
+        });
+        card.appendChild(projectCheck);
+      }
 
       const thumb = document.createElement('div');
       thumb.className = 'project-thumb';
@@ -1400,11 +1541,54 @@
   saveOneBtn.addEventListener('click', saveCurrent);
   saveAllBtn.addEventListener('click', saveAll);
   themeToggleBtn.addEventListener('click', toggleWhiteMode);
-  addProjectBtn.addEventListener('click', createNewProject);
+  addProjectBtn.addEventListener('click', e => {
+    if (state.suppressNextFabClick) { state.suppressNextFabClick = false; return; }
+    createNewProject();
+  });
+  addProjectBtn.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    showFabMenu(e.clientX, e.clientY);
+  });
+  addProjectBtn.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse') return;
+    clearTimeout(state.fabLongPressTimer);
+    state.fabLongPressTimer = setTimeout(() => {
+      state.suppressNextFabClick = true;
+      const rect = addProjectBtn.getBoundingClientRect();
+      showFabMenu(rect.left, rect.top - 150);
+    }, 520);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(type => addProjectBtn.addEventListener(type, () => clearTimeout(state.fabLongPressTimer)));
+  if (fabNewBtn) fabNewBtn.addEventListener('click', () => { hideFabMenu(); createNewProject(); });
+  if (fabExportBtn) fabExportBtn.addEventListener('click', () => { hideFabMenu(); setHomeSelectionMode('export'); });
+  if (fabImportBtn) fabImportBtn.addEventListener('click', () => { hideFabMenu(); backupImportFile && backupImportFile.click(); });
+  if (fabBulkDeleteBtn) fabBulkDeleteBtn.addEventListener('click', () => { hideFabMenu(); setHomeSelectionMode('delete'); });
+  if (homeSelectAllToggle) homeSelectAllToggle.addEventListener('change', () => {
+    const checked = homeSelectAllToggle.checked;
+    state.homeSelectedProjectIds = new Set(checked ? state.homeVisibleProjectIds : []);
+    state.homeLastCheckedProjectIndex = null;
+    updateHomeSelectionBar();
+    renderHome();
+  });
+  if (homeSelectionCancelBtn) homeSelectionCancelBtn.addEventListener('click', () => setHomeSelectionMode(null));
+  if (homeExportSelectedBtn) homeExportSelectedBtn.addEventListener('click', async () => {
+    const ids = Array.from(state.homeSelectedProjectIds || []);
+    if (!ids.length) { alert('내보낼 저장본을 선택해줘.'); return; }
+    await exportBackup(ids);
+    setHomeSelectionMode(null);
+  });
+  if (homeDeleteSelectedBtn) homeDeleteSelectedBtn.addEventListener('click', async () => {
+    const ids = Array.from(state.homeSelectedProjectIds || []);
+    if (!ids.length) { alert('삭제할 저장본을 선택해줘.'); return; }
+    if (!confirm(`${ids.length}개 저장본을 삭제할까요?`)) return;
+    for (const id of ids) await deleteProject(id);
+    setHomeSelectionMode(null);
+  });
   if (homeSearchInput) homeSearchInput.addEventListener('input', e => { state.homeQuery = e.target.value || ''; renderHome(); });
   if (homeSearchBtn) homeSearchBtn.addEventListener('click', () => { state.homeQuery = homeSearchInput ? homeSearchInput.value || '' : ''; renderHome(); });
   if (homeSortSelect) homeSortSelect.addEventListener('change', e => { state.homeSort = e.target.value || 'latest'; renderHome(); });
-  if (backupExportBtn) backupExportBtn.addEventListener('click', exportBackup);
+  if (backupExportBtn) backupExportBtn.addEventListener('click', () => exportBackup());
   if (backupImportBtn) backupImportBtn.addEventListener('click', () => backupImportFile && backupImportFile.click());
   if (backupImportFile) backupImportFile.addEventListener('change', e => importBackupFile(e.target.files && e.target.files[0]));
   if (homeContextDeleteBtn) homeContextDeleteBtn.addEventListener('click', async () => {
@@ -1417,9 +1601,10 @@
   });
   document.addEventListener('click', e => {
     if (homeContextMenu && !homeContextMenu.contains(e.target)) hideHomeContextMenu();
+    if (fabMenu && !fabMenu.contains(e.target) && e.target !== addProjectBtn) hideFabMenu();
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') hideHomeContextMenu(); });
-  window.addEventListener('scroll', hideHomeContextMenu, true);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { hideHomeContextMenu(); hideFabMenu(); if (state.homeSelectionMode) setHomeSelectionMode(null); } });
+  window.addEventListener('scroll', () => { hideHomeContextMenu(); hideFabMenu(); }, true);
   backHomeBtn.addEventListener('click', async () => { await saveCurrentProjectNow(); showHome(); });
   if (mobileBackHomeBtn) mobileBackHomeBtn.addEventListener('click', async () => { await saveCurrentProjectNow(); showHome(); });
   if (mobilePreviewTab) mobilePreviewTab.addEventListener('click', () => setMobileEditorTab('preview'));
